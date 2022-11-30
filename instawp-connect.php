@@ -7,7 +7,7 @@
  * @wordpress-plugin
  * Plugin Name:       InstaWP Connect
  * Description:       Create staging sites with your InstaWP account
- * Version:           1.0
+ * Version:           0.0.6
  * Author:            InstaWP Team
  * Author URI:        https://instawp.com/
  * License:           GPL-3.0+
@@ -92,9 +92,7 @@ define('INSTAWP_PACK_SIZE',1 << 20);
 define('INSTAWP_SUCCESS','success');
 define('INSTAWP_FAILED','failed');
 define('INSTAWP_UPLOAD_TO_CLOUD', true);
-//define('INSTAWP_API_URL','https://s.instawp.io/api/v1');
 define('INSTAWP_API_URL','/api/v1');
-define('INSTAWP_AUTO_LOGIN_URL','https://s.instawp.io/');
 @ini_set('memory_limit', '1024M');
 
 /**
@@ -116,6 +114,17 @@ function instawp_plugin_activate() {
     }
     add_option('instawp_do_activation_redirect', true);
 }
+
+/*Deactivate Hook Handle*/
+function instawp_plugin_deactivate(){
+    /*heartbeat*/
+    if ( wp_get_schedule('instwp_handle_heartbeat_cron_action') ) {
+        wp_clear_scheduled_hook('instwp_handle_heartbeat_cron_action');
+        $timestamp = wp_next_scheduled('instwp_handle_heartbeat_cron_action');
+        wp_unschedule_event($timestamp,'instwp_handle_heartbeat_cron_action');
+    }
+}
+
 function instawp_init_plugin_redirect() {
     if ( get_option('instawp_do_activation_redirect', false) ) {
         delete_option('instawp_do_activation_redirect');
@@ -155,6 +164,7 @@ function instawp_init_plugin_redirect() {
     }
 }
 register_activation_hook(__FILE__, 'instawp_plugin_activate');
+register_deactivation_hook(__FILE__, 'instawp_plugin_deactivate');
 add_action('admin_init', 'instawp_init_plugin_redirect');
 
 /**

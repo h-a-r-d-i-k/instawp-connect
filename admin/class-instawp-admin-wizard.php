@@ -67,22 +67,27 @@ class InstaWP_Admin_Wizard {
             <img class="main-img <?php echo esc_attr($class); ?>" src="<?php echo esc_url(INSTAWP_PLUGIN_IMAGES_URL.'wizard/step-img.png') ?>">
         <?php 
     }
-    public function instawp_admin_wizard_two_btn( $btn_args ) {
-        
+    public function instawp_admin_wizard_two_btn( $btn_args ) {        
         ?>
-         <div class="instawp-wizard-btn-wrap button-2">
-            
-          <a class="instawp-wizard-btn inactive" href="javascript:void(0)">
-            <span><?php echo esc_html( $btn_args['button_1']['label'] ); ?></span>
-            <p>(<?php echo esc_html( $btn_args['button_1']['desc'] ); ?>)</p>
-          </a>
-          <a class="instawp-wizard-btn" id="instawp_quickbackup_btn" href="javascript:void(0)">
-            <span>
-            <?php echo esc_html( $btn_args['button_2']['label'] ); ?>
-            </span>
-             <p>(<?php echo esc_html( $btn_args['button_2']['desc'] ); ?>) </p>
-             
-          </a>
+        <div class="instawp-wizard-btn-wrap button-2">            
+            <a class="instawp-wizard-btn" id="instawp_quick_backup_btn" data-backup-type="1" href="javascript:void(0)">
+                <span><?php echo esc_html( $btn_args['button_1']['label'] ); ?></span>
+                <p>(<?php echo esc_html( $btn_args['button_1']['desc'] ); ?>)</p>
+            </a>
+            <a class="instawp-wizard-btn" data-backup-type="2" id="instawp_quickbackup_btn" href="javascript:void(0)">
+                <span>
+                    <?php echo esc_html( $btn_args['button_2']['label'] ); ?>
+                </span>
+                <p>(<?php echo esc_html( $btn_args['button_2']['desc'] ); ?>) </p>             
+            </a>
+
+            <?php $cancel_nonce = wp_create_nonce( 'cancel_backup' );?>
+            <?php /*?>
+            <a class="instawp-cancel-backup-btn" data-nonce="<?php echo $cancel_nonce;?>" style="display:none" id="instawp_cancel_backup_btn" href="javascript:void(0)">
+                <?php echo esc_html( $btn_args['button_3']['label'] ); ?>
+            </a>
+            <?php */?>
+            <input type="hidden" id="currentTaskId" name="currentTaskId" value="">
         </div>
         <?php 
     }
@@ -93,12 +98,39 @@ class InstaWP_Admin_Wizard {
         }
 
         ?>
-         <div class="instawp-wizard-btn-wrap">
-          <a class="instawp-wizard-btn instawp-wizard-btn-js" href="javascript:void(0)" data-<?php echo esc_attr($data) ?> = "<?php echo esc_attr($data); ?>">
-            <?php echo esc_html( $btn_args['label'] ); ?>
-          </a>
-          <p class="instawp-err-msg"></p>
-
+        <div class="instawp-wizard-btn-wrap">
+            <?php
+                $api_key = '';
+                $instawp_api_options = get_option('instawp_api_options');   
+                if( !empty( $instawp_api_options ) ){
+                   $api_key = $instawp_api_options['api_key']; 
+                   if( empty( !$api_key ) ){
+                        ?>
+                        <a class="instawp-wizard-btn instawp-wizard-btn-js" href="javascript:void(0)" data-<?php echo esc_attr($data) ?> = "<?php echo esc_attr($data); ?>">
+                            <?php echo esc_html( $btn_args['label'] ); ?>
+                        </a>
+                        <?php
+                   }
+                }else{
+                    if( $data!='connect' ){
+                        ?>
+                        <a class="instawp-wizard-btn instawp-wizard-btn-js" href="javascript:void(0)" data-<?php echo esc_attr($data) ?> = "<?php echo esc_attr($data); ?>">
+                            <?php echo esc_html( $btn_args['label'] ); ?>
+                        </a>
+                        <?php
+                    }else{
+                        $instawp_api_url = InstaWP_Setting::get_api_domain();
+                        $return_url = urlencode( admin_url('admin.php?page=instawp-connect') );
+                        $source_url = $instawp_api_url.'/authorize?source=InstaWP Connect&return_url='.$return_url;
+                        ?>
+                        <a class="instawp-wizard-btn instawp-wizard-btn-js" href="<?php echo $source_url?>" data-<?php echo esc_attr($data) ?> = "<?php echo esc_attr($data); ?>">
+                            <?php echo esc_html( $btn_args['label'] ); ?>
+                        </a>
+                        <?php
+                    }
+               }
+            ?>            
+            <p class="instawp-err-msg"></p>
         </div>
         <?php 
     }
@@ -112,6 +144,7 @@ class InstaWP_Admin_Wizard {
                 </svg> Back
             </a>
         </div>
+        <div class="limit_notice"></div>
         <?php
     }
     

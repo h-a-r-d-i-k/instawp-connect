@@ -18,15 +18,15 @@ $connect_options = get_option('instawp_api_options', '');
 $instawp_api_url = get_option('instawp_api_url', '');
 $general_setting = InstaWP_Setting::get_setting(true, "");
 $api_key = '';
-//$api_heartbeat = 15;
-$instawp_heartbeat_option = 15;
+
 if( !empty( get_option( 'instawp_heartbeat_option' )))
 {
     $instawp_heartbeat_option =  get_option( 'instawp_heartbeat_option' );
+}else{
+    $instawp_heartbeat_option = 2;
 }
 if ( ! empty($connect_options) ) {
     $api_key = $connect_options['api_key'];
-    //$api_heartbeat = $connect_options['api_heartbeat'];
 }
 // $InstaWP_BackupUploader = new InstaWP_BackupUploader();
 // $res                    = $InstaWP_BackupUploader->_rescan_local_folder_set_backup_api();
@@ -69,8 +69,16 @@ foreach ( $tasks as $task_id => $task ) {
                 </th>
                 <td>
                     <input type="text" name="api_key" id="instawp_api" value="<?php echo esc_html($api_key); ?>" />
-                    <a class="button button-primary" id="instawp-check-key">Check</a>                        
-                        <a href="https://app.instawp.io/user/api-tokens" target="_blank" class="">Generate API Key</a>                        
+                    <a class="button button-primary" id="instawp-check-key">Check</a>     
+                    <?php /*                  
+                    <a href="https://app.instawp.io/user/api-tokens" target="_blank" class="">Generate API Key</a>   
+                    */ ?>           
+                    <?php
+                        $instawp_api_url = InstaWP_Setting::get_api_domain();
+                        $return_url = urlencode( admin_url('admin.php?page=instawp-connect') );
+                        $source_url = $instawp_api_url.'/authorize?source=InstaWP Connect&return_url='.$return_url;
+                    ?>          
+                    <a href="<?php echo $source_url;?>" class="">Generate API Key</a>   
                     <p class="instawp-err-msg"></p>
                 </td>
                 
@@ -93,7 +101,7 @@ foreach ( $tasks as $task_id => $task ) {
                     </label> 
                 </th>
                 <td>
-                    <input type="number" min="1" max="120" value="<?php echo esc_html($instawp_heartbeat_option); ?>" name="instawp_api_heartbeat" id="instawp_api_heartbeat" />                        
+                    <input type="number" min="2" max="120" value="<?php echo esc_html($instawp_heartbeat_option); ?>" name="instawp_api_heartbeat" id="instawp_api_heartbeat" />                        
                 </td>                    
             </tr>
 
@@ -108,18 +116,36 @@ foreach ( $tasks as $task_id => $task ) {
                     </th>
                     <td>
                         <input type="text" value="<?php echo esc_attr($interal_api_domain); ?>" required="" name="instawp_api_url_internal" id="instawp_api_url_internal" />                        
-                    </td>                    
+                    </td>               
                 </tr>
+                <tr>
+                    <td>
+                        <?php 
+                            if( isset( $_GET['internal'] ) && $_GET['page']=='instawp-settings' && 1 === intval( $_GET['internal'] ) ){ 
+                                
+                                $nonce = wp_create_nonce( 'delete_wpnonce' );
+                                $actionurl = admin_url( "admin.php?page=instawp-settings" );
+                                $delete_url = add_query_arg( array( 'delete_wpnonce' => $nonce ), $actionurl );
+                            ?> 
+                            <!-- <tr valign="top">-->
+                                <!-- <td> -->
+                                    <a href="<?php echo $delete_url?>" class="button button-primary">Clear Backup Folder</a>
+                                <!-- </td> -->
+                            <!-- </tr> -->
+                        <?php } ?>
+                    </td>
+                </tr>
+                
             <?php } ?>
             
         </table>
         <?php wp_nonce_field( 'instawp_settings', 'instawp_settings_nonce' ); ?>
         <?php submit_button(); ?>
     </form>
-    <p class="instawp-err-msg heartbeat"></p>
 </div>
 <script type="text/javascript">
     jQuery(document).ready(function () {
+        
         jQuery(document).on('click','#instawp-check-key',function(){     
             var api_key = jQuery('#instawp_api').val();
             var api_heartbeat = jQuery('#instawp_api_heartbeat').val();
@@ -165,27 +191,16 @@ foreach ( $tasks as $task_id => $task ) {
                     api_heartbeat: api_heartbeat,
                     instawp_api_url_internal: instawp_api_url_internal                    
                 },
-                success: function ( response ) {  
-
-                    var resObj = JSON.parse( response );
-                    if( resObj.resType == false ) {
-                        var resMsg = '<span style="color:red">'+resObj.message+'</span>';
-                    }
-                    else {
-                        var resMsg = '<span style="color:green">'+resObj.message+'</span>';
-                    }
-                    jQuery('.instawp-err-msg.heartbeat').html(resMsg);
-                    setTimeout(function () {
-                        jQuery('.instawp-err-msg.heartbeat').html('');
-                    }, 1200);
+                success: function ( response ) {                      
+                    location.reload();
                 }
             }); 
         }); 
     }); 
 
    
-    //heartbeat call based on time code start
-    var call_timing = "<?php echo $instawp_heartbeat_option;?>";
+    /*//heartbeat call based on time code start
+    var call_timing = "<?php // echo $instawp_heartbeat_option;?>";
     if( call_timing=='' ){
         call_timing = 15;
     }
@@ -211,5 +226,5 @@ foreach ( $tasks as $task_id => $task ) {
                console.log('error');
            }
        });    
-   }
+   }*/
 </script>

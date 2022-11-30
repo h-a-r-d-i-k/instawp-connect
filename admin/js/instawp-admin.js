@@ -125,8 +125,7 @@ function instawp_post_request(ajax_data, callback, error_callback, time_out){
         type: "post",
         url: instawp_ajax_object.ajax_url,
         data: ajax_data,
-        success: function (data) {
-            //console.log(ajax_data);
+        success: function (data) {                  
             callback(data);
         },
         error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -140,14 +139,13 @@ function instawp_post_request(ajax_data, callback, error_callback, time_out){
  * Check if there are running tasks (backup and download)
  */
 function instawp_check_runningtask(){
-    
     var ajax_data = {
         'action': 'instawp_list_tasks',
         'backup_id': tmp_current_click_backupid
     };
     if(instawp_restoring === false) {
         instawp_post_request(ajax_data, function (data) {
-           setTimeout(function () {
+            setTimeout(function () {
                 instawp_manage_task();
             }, 3000);
             try {
@@ -184,6 +182,7 @@ function instawp_check_runningtask(){
                                 running_backup_taskid = index;
                                 instawp_control_backup_lock();
                                 jQuery('#instawp_postbox_backup_percent').show();
+                                jQuery('#instawp_cancel_backup_btn').show();
                                 jQuery('#instawp_postbox_backup_percent').html(value.progress_html);
                                 m_need_update = true;
                                 
@@ -192,6 +191,7 @@ function instawp_check_runningtask(){
                                 running_backup_taskid = index;
                                 instawp_control_backup_lock();
                                 jQuery('#instawp_postbox_backup_percent').show();
+                                jQuery('#instawp_cancel_backup_btn').show();
                                 jQuery('#instawp_postbox_backup_percent').html(value.progress_html);
                                 if (value.data.next_resume_time !== 'get next resume time failed.') {
                                     instawp_resume_backup(index, value.data.next_resume_time);
@@ -204,6 +204,7 @@ function instawp_check_runningtask(){
                                 running_backup_taskid = index;
                                 instawp_control_backup_lock();
                                 jQuery('#instawp_postbox_backup_percent').show();
+                                jQuery('#instawp_cancel_backup_btn').show();
                                 jQuery('#instawp_postbox_backup_percent').html(value.progress_html);
                                 m_need_update = true;
                             }
@@ -211,11 +212,12 @@ function instawp_check_runningtask(){
                                 jQuery('#instawp_postbox_backup_percent').html(value.progress_html);
                                 instawp_control_backup_unlock();
                                 jQuery('#instawp_postbox_backup_percent').hide();
+                                jQuery('#instawp_cancel_backup_btn').hide();
                                 jQuery('#instawp_last_backup_msg').html(jsonarray.last_msg_html);
                                 jQuery('#instawp_loglist').html("");
                                 jQuery('#instawp_loglist').append(jsonarray.log_html);
                                 instawp_log_count = jsonarray.log_count;
-                                //instawp_display_log_page();
+                                    //instawp_display_log_page();
                                 jQuery('#instawp-wizard-screen-3').removeClass('instawp-show');
                                 jQuery('#instawp-wizard-screen-4').addClass('instawp-show');
                                 running_backup_taskid = '';
@@ -226,10 +228,10 @@ function instawp_check_runningtask(){
                                 
                                 if( is_instawp_check_staging_running == false ) {
                                     console.log('is_instawp_check_staging_running');
-                                    //instawp_check_staging()
-                                    // //instawp_check_staging_interval = setTimeout(instawp_check_staging, 15000);
-                                    // console.log(is_instawp_check_staging_running);
-                                    // is_instawp_check_staging_running = true;
+                                        //instawp_check_staging()
+                                        // //instawp_check_staging_interval = setTimeout(instawp_check_staging, 15000);
+                                        // console.log(is_instawp_check_staging_running);
+                                        // is_instawp_check_staging_running = true;
                                     instawp_check_staging_interval = setInterval(instawp_check_staging, 30000);
                                     is_instawp_check_staging_running = true;
                                 }
@@ -238,18 +240,19 @@ function instawp_check_runningtask(){
                                     clearInterval( instawp_check_staging_interval );
                                 }
                                 
-                                //
-                                //console.log('start checking staging site');
+                                    //
+                                    //console.log('start checking staging site');
                             }
                             else if (value.status.str === 'upload_completed') {
                                 jQuery('#instawp_postbox_backup_percent').html(value.progress_html);
                                 instawp_control_backup_unlock();
                                 jQuery('#instawp_postbox_backup_percent').hide();
+                                jQuery('#instawp_cancel_backup_btn').hide();
                                 jQuery('#instawp_last_backup_msg').html(jsonarray.last_msg_html);
                                 jQuery('#instawp_loglist').html("");
                                 jQuery('#instawp_loglist').append(jsonarray.log_html);
                                 instawp_log_count = jsonarray.log_count;
-                                //instawp_display_log_page();
+                                    //instawp_display_log_page();
                                 running_backup_taskid = '';
                                 m_backup_task_id = '';
                                 m_need_update = true;
@@ -260,6 +263,7 @@ function instawp_check_runningtask(){
                                 jQuery('#instawp_postbox_backup_percent').html(value.progress_html);
                                 instawp_control_backup_unlock();
                                 jQuery('#instawp_postbox_backup_percent').hide();
+                                jQuery('#instawp_cancel_backup_btn').hide();
                                 jQuery('#instawp_last_backup_msg').html(jsonarray.last_msg_html);
                                 jQuery('#instawp_loglist').html("");
                                 jQuery('#instawp_loglist').append(jsonarray.log_html);
@@ -278,85 +282,86 @@ function instawp_check_runningtask(){
                         jQuery('#instawp_backup_log_btn').css({'pointer-events': 'auto', 'opacity': '1'});
                         instawp_control_backup_unlock();
                         jQuery('#instawp_postbox_backup_percent').hide();
+                        jQuery('#instawp_cancel_backup_btn').hide();
                         instawp_retrieve_backup_list();
                         instawp_retrieve_last_backup_message();
                         instawp_retrieve_log_list();
                         running_backup_taskid='';
                     }
                 }
-                /*if (jsonarray.download.length !== 0) {
-                    if(jsonarray.download.result === 'success') {
-                        b_has_data = true;
-                        task_retry_times = 0;
-                        var i = 0;
-                        var file_name = '';
-                        jQuery('#instawp_file_part_' + tmp_current_click_backupid).html("");
-                        var b_download_finish = false;
-                        jQuery.each(jsonarray.download.files, function (index, value) {
-                            i++;
-                            file_name = index;
-                            var progress = '0%';
-                            if (value.status === 'need_download') {
-                                if (m_downloading_file_name === file_name) {
+                    /*if (jsonarray.download.length !== 0) {
+                        if(jsonarray.download.result === 'success') {
+                            b_has_data = true;
+                            task_retry_times = 0;
+                            var i = 0;
+                            var file_name = '';
+                            jQuery('#instawp_file_part_' + tmp_current_click_backupid).html("");
+                            var b_download_finish = false;
+                            jQuery.each(jsonarray.download.files, function (index, value) {
+                                i++;
+                                file_name = index;
+                                var progress = '0%';
+                                if (value.status === 'need_download') {
+                                    if (m_downloading_file_name === file_name) {
+                                        m_need_update = true;
+                                    }
+                                    jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
+                                    //b_download_finish=true;
+                                }
+                                else if (value.status === 'running') {
+                                    if (m_downloading_file_name === file_name) {
+                                        instawp_lock_download(tmp_current_click_backupid);
+                                    }
                                     m_need_update = true;
+                                    jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
+                                    b_download_finish = false;
                                 }
-                                jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
-                                //b_download_finish=true;
-                            }
-                            else if (value.status === 'running') {
-                                if (m_downloading_file_name === file_name) {
-                                    instawp_lock_download(tmp_current_click_backupid);
+                                else if (value.status === 'completed') {
+                                    if (m_downloading_file_name === file_name) {
+                                        instawp_unlock_download(tmp_current_click_backupid);
+                                        m_downloading_id = '';
+                                        m_downloading_file_name = '';
+                                    }
+                                    jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
+                                    b_download_finish = true;
                                 }
-                                m_need_update = true;
-                                jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
-                                b_download_finish = false;
-                            }
-                            else if (value.status === 'completed') {
-                                if (m_downloading_file_name === file_name) {
-                                    instawp_unlock_download(tmp_current_click_backupid);
-                                    m_downloading_id = '';
-                                    m_downloading_file_name = '';
+                                else if (value.status === 'error') {
+                                    if (m_downloading_file_name === file_name) {
+                                        instawp_unlock_download(tmp_current_click_backupid);
+                                        m_downloading_id = '';
+                                        m_downloading_file_name = '';
+                                    }
+                                    alert(value.error);
+                                    jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
+                                    b_download_finish = true;
                                 }
-                                jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
-                                b_download_finish = true;
-                            }
-                            else if (value.status === 'error') {
-                                if (m_downloading_file_name === file_name) {
-                                    instawp_unlock_download(tmp_current_click_backupid);
-                                    m_downloading_id = '';
-                                    m_downloading_file_name = '';
+                                else if (value.status === 'timeout') {
+                                    if (m_downloading_file_name === file_name) {
+                                        instawp_unlock_download(tmp_current_click_backupid);
+                                        m_downloading_id = '';
+                                        m_downloading_file_name = '';
+                                    }
+                                    alert('Download timeout, please retry.');
+                                    jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
+                                    b_download_finish = true;
                                 }
-                                alert(value.error);
-                                jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
-                                b_download_finish = true;
+                            });
+                            jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(jsonarray.download.place_html);
+                            if (b_download_finish == true) {
+                                tmp_current_click_backupid = '';
                             }
-                            else if (value.status === 'timeout') {
-                                if (m_downloading_file_name === file_name) {
-                                    instawp_unlock_download(tmp_current_click_backupid);
-                                    m_downloading_id = '';
-                                    m_downloading_file_name = '';
-                                }
-                                alert('Download timeout, please retry.');
-                                jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(value.html);
-                                b_download_finish = true;
-                            }
-                        });
-                        jQuery('#instawp_file_part_' + tmp_current_click_backupid).append(jsonarray.download.place_html);
-                        if (b_download_finish == true) {
-                            tmp_current_click_backupid = '';
+                        }
+                        else{
+                            b_has_data = true;
+                            alert(jsonarray.download.error);
+                        }
+                    }*/
+                    if (!b_has_data) {
+                        task_retry_times++;
+                        if (task_retry_times < 5) {
+                            m_need_update = true;
                         }
                     }
-                    else{
-                        b_has_data = true;
-                        alert(jsonarray.download.error);
-                    }
-                }*/
-                if (!b_has_data) {
-                    task_retry_times++;
-                    if (task_retry_times < 5) {
-                        m_need_update = true;
-                    }
-                }
             }
             catch(err){
                 alert(err);
@@ -516,14 +521,18 @@ function instawp_interface_flow_control(){
  * Manage backup and download tasks. Retrieve the data every 3 seconds for checking if the backup or download tasks exist or not.
  */
 function instawp_manage_task() {
+    console.log("instawp manage task call");
     if(m_need_update === true){
         //console.log(m_need_update);
         m_need_update = false;
         instawp_check_runningtask();
-
+        console.log('Mange Task IF');
+        console.count('Mange Task IF');
     }
     else{
         //console.log(m_need_update);
+        console.log('Mange Task ELSE');
+        console.count('Mange Task ELSE');
         setTimeout(function(){
             instawp_manage_task();
         }, 3000);
@@ -546,9 +555,9 @@ function instawp_add_notice(notice_action, notice_type, notice_msg){
         tmp_notice_msg = notice_msg;
     }
     switch(notice_action){
-        case "Backup":
-            notice_id="instawp_backup_notice";
-            break;
+    case "Backup":
+        notice_id="instawp_backup_notice";
+        break;
     }
     var bfind = false;
     $div = jQuery('#'+notice_id).children('div').children('p');
@@ -567,10 +576,10 @@ function instawp_add_notice(notice_action, notice_type, notice_msg){
         var div = '';
         if(notice_type === "Warning"){
             div = "<div class='notice notice-warning is-dismissible inline'><p>" + instawplion.warning + notice_msg + "</p>" +
-                "<button type='button' class='notice-dismiss' onclick='click_dismiss_notice(this);'>" +
-                "<span class='screen-reader-text'>Dismiss this notice.</span>" +
-                "</button>" +
-                "</div>";
+            "<button type='button' class='notice-dismiss' onclick='click_dismiss_notice(this);'>" +
+            "<span class='screen-reader-text'>Dismiss this notice.</span>" +
+            "</button>" +
+            "</div>";
         }
         else if(notice_type === "Error"){
             div = "<div class=\"notice notice-error inline\"><p>" + instawplion.error + notice_msg + "</p></div>";
@@ -580,18 +589,18 @@ function instawp_add_notice(notice_action, notice_type, notice_msg){
             jQuery('#instawp_backup_notice').show();
             var success_msg = instawp_completed_backup + " backup tasks have been completed.";
             div = "<div class='notice notice-success is-dismissible inline'><p>" + success_msg + "</p>" +
-                "<button type='button' class='notice-dismiss' onclick='click_dismiss_notice(this);'>" +
-                "<span class='screen-reader-text'>Dismiss this notice.</span>" +
-                "</button>" +
-                "</div>";
+            "<button type='button' class='notice-dismiss' onclick='click_dismiss_notice(this);'>" +
+            "<span class='screen-reader-text'>Dismiss this notice.</span>" +
+            "</button>" +
+            "</div>";
             instawp_completed_backup++;
         }
         else if(notice_type === "Info"){
             div = "<div class='notice notice-info is-dismissible inline'><p>" + notice_msg + "</p>" +
-                "<button type='button' class='notice-dismiss' onclick='click_dismiss_notice(this);'>" +
-                "<span class='screen-reader-text'>Dismiss this notice.</span>" +
-                "</button>" +
-                "</div>";
+            "<button type='button' class='notice-dismiss' onclick='click_dismiss_notice(this);'>" +
+            "<span class='screen-reader-text'>Dismiss this notice.</span>" +
+            "</button>" +
+            "</div>";
         }
         jQuery('#'+notice_id).append(div);
     }
@@ -662,7 +671,7 @@ function instawp_hide_mainwp_tab_page(){
 function instawp_output_ajaxerror(action, textStatus, errorThrown){
     action = 'trying to establish communication with your server';
     var error_msg = "instawp_request: "+ textStatus + "(" + errorThrown + "): an error occurred when " + action + ". " +
-        "This error may be request not reaching or server not responding. Please try again later.";
+    "This error may be request not reaching or server not responding. Please try again later.";
         //"This error could be caused by an unstable internet connection. Please try again later.";
     return error_msg;
 }
@@ -738,38 +747,39 @@ jQuery(document).on("click","#instawp_backup_cancel_btn",function(){
 
     instawp_cancel_backup();
 });
- function instawp_cancel_backup(){
-            
-            var ajax_data= {
-                'action': 'instawp_backup_cancel'
+function instawp_cancel_backup(){
+
+    var ajax_data= {
+        'action': 'instawp_backup_cancel'
                 //'task_id': running_backup_taskid
-            };
-            jQuery('#instawp_backup_cancel_btn').css({'pointer-events': 'none', 'opacity': '0.4'});
-            instawp_post_request(ajax_data, function(data){
-                try {
-                    var jsonarray = jQuery.parseJSON(data);
-                    jQuery('#instawp_current_doing').html(jsonarray.msg);
-                }
-                catch(err){
-                    alert(err);
-                }
-            }, function(XMLHttpRequest, textStatus, errorThrown) {
-                jQuery('#instawp_backup_cancel_btn').css({'pointer-events': 'auto', 'opacity': '1'});
-                var error_message = instawp_output_ajaxerror('cancelling the backup', textStatus, errorThrown);
-                instawp_add_notice('Backup', 'Error', error_message);
-            });
+    };
+    jQuery('#instawp_backup_cancel_btn').css({'pointer-events': 'none', 'opacity': '0.4'});
+    instawp_post_request(ajax_data, function(data){
+        try {
+            var jsonarray = jQuery.parseJSON(data);
+            jQuery('#instawp_current_doing').html(jsonarray.msg);
         }
+        catch(err){
+            alert(err);
+        }
+    }, function(XMLHttpRequest, textStatus, errorThrown) {
+        jQuery('#instawp_backup_cancel_btn').css({'pointer-events': 'auto', 'opacity': '1'});
+        var error_message = instawp_output_ajaxerror('cancelling the backup', textStatus, errorThrown);
+        instawp_add_notice('Backup', 'Error', error_message);
+    });
+}
 
 
 
-   
+
 //var instawp_check_staging_interval = setInterval(instawp_check_staging, 9000);
 //instawp_check_staging();
 //clearInterval(instawp_check_staging_interval);
 function instawp_check_staging(){
-      
-      is_instawp_check_staging_running = true;
-      console.log( 'instawp_check_staging call');
+    console.log("ON 770 ---> ");
+
+    is_instawp_check_staging_running = true;
+    console.log( 'instawp_check_staging call');
     var ajax_data= {
         'action': 'instawp_check_staging'
         //'task_id': running_backup_taskid
@@ -777,7 +787,7 @@ function instawp_check_staging(){
     
     instawp_post_request(ajax_data, function(data){
         try {
-            console.log(data);
+            console.log(JSON.parse(data));
             var jsonarray = JSON.parse(data);
             
             if (jsonarray === null) {
@@ -787,34 +797,78 @@ function instawp_check_staging(){
                 
             }
             else {
-                  
+                console.log("ON 790 ---> " , jsonarray);
+                console.log("ON 791 ---> " , jsonarray.status);
                 if( jsonarray.status == 1 ) {
+                    console.log("Console jsonarray " . jsonarray);
                     console.log('jsonarray.status == 1');    
                     is_instawp_check_staging_compteted = true;
-                    jQuery('#instawp_site_url a').html(jsonarray.data.wp[0].site_name); 
-                    jQuery('#instawp_site_url a').attr('href',jsonarray.data.wp[0].site_name); 
-                    jQuery('#instawp_admin_url a').html(jsonarray.data.wp[0].wp_admin_url);
-                    jQuery('#instawp_admin_url a').attr('href',jsonarray.data.wp[0].wp_admin_url);
-                    jQuery('#instawp_user_name span').html(jsonarray.data.wp[0].wp_username); 
-                    jQuery('#instawp_password span').html(jsonarray.data.wp[0].wp_password);  
-                    var admin_url = 'https://s.instawp.io/';
+
+                    jQuery('.instawp-stage-links').show();
+                    jQuery('.instawp-site-details-heading').show();
+
+                    jQuery('#instawp_site_url a').html(jsonarray.details.name); 
+                    jQuery('#instawp_site_url a').attr('href',jsonarray.details.url);
+
+                    jQuery('#instawp_user_name span').html(jsonarray.details.user); 
+                    jQuery('#instawp_password span').html(jsonarray.details.code);  
+
+                    jQuery('.instawp-site-details-wrapper .login-btn #instawp_autologin_quick_access').attr('href',jsonarray.details.login); 
+
+                    // jQuery('#instawp_site_url a').html(jsonarray.data.wp[0].site_name); 
+                    // jQuery('#instawp_site_url a').attr('href','https://'+jsonarray.data.wp[0].wp_admin_url); 
+                    // jQuery('#instawp_admin_url a').html(jsonarray.data.wp[0].wp_admin_url);
+                    // jQuery('#instawp_admin_url a').attr('href','https://'+jsonarray.data.wp[0].wp_admin_url);
+                    // jQuery('#instawp_user_name span').html(jsonarray.data.wp[0].wp_username); 
+                    // jQuery('#instawp_password span').html(jsonarray.data.wp[0].wp_password);  
+
+                    // var admin_url = instawp_ajax_object.cloud_url;
                     
-                    var auto_login_hash = jsonarray.data.wp[0].auto_login_hash;
-                    var auto_login_url = admin_url + 'wordpress-auto-login?site='+auto_login_hash;
-                    jQuery('.instawp-site-details-wrapper .login-btn a').attr('href',auto_login_url); 
+                    // var auto_login_hash = jsonarray.data.wp[0].auto_login_hash;
+                    // var auto_login_url = admin_url + 'wordpress-auto-login?site='+auto_login_hash;
+                    // jQuery('.instawp-site-details-wrapper .login-btn #instawp_autologin_quick_access').attr('href',auto_login_url); 
+
+                    var connect_page = instawp_ajax_object.plugin_connect_url;
+
+                    console.log("connect_page" , connect_page);
+                    jQuery('.instawp-site-details-wrapper .login-btn #instawp_startover_quick_access').attr('href',connect_page); 
+
                     //clearInterval(instawp_check_staging_interval);
                     clearInterval(instawp_check_staging_interval);
                     jQuery('#site-details-progress').hide();
                     jQuery('.instawp-site-details-wrapper .site-details').removeClass('instawp-display-none');
+                    jQuery('.instawp-site-details-wrapper .instawp-stage-links').removeClass('instawp-display-none');
                     jQuery('.instawp-site-details-wrapper .instawp-wizard-btn-wrap').removeClass('instawp-display-none');
-                    location.reload(true);
+                    
+                    /* Hide Computer Image on Last Screen Code Start */
+                    jQuery('.instawp-wizard-container.wizard-screen-4.instawp-show .main-img').addClass('instawp-display-none');
+                    /* Hide Computer Image on Last Screen Code End */
+                    
+                    console.log("DISPLAYED INFO, NOW USER CAN RELOAD");
 
+                    // delete unused zip from plugin after success or failed creating site
+                   
+                    jQuery.ajax({
+                        method: 'post',
+                        url: instawp_ajax_object.ajax_url,
+                        data: {
+                            action: 'instawp_logger',
+                            n: instawp_ajax_object.nlogger,
+                            l: 1,
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            console.log(errorThrown);                             
+                        },success: function (response) {
+                            console.log("-- Called The delete option -- ");
+                            console.log(response);
+                        }
+                    });
                 }
-                
             }
+            console.log("ON 818 ---> ");
             
-                
-                
+            
+            
                 // 
                 // jQuery('#instawp_site_url a').attr('href',jsonarray.data.wp[0].site_name); 
                 // jQuery('#instawp_admin_url a').html(jsonarray.data.wp[0].wp_admin_url) 
@@ -828,7 +882,7 @@ function instawp_check_staging(){
                 // jQuery('.instawp-site-details-wrapper .login-btn a').attr('href',auto_login_url); 
                 // jQuery('#site-details-progress').hide();
                 //clearInterval(instawp_check_staging_interval);
-           
+            
             
             
             //clearInterval(instawp_check_staging_interval);
@@ -836,7 +890,7 @@ function instawp_check_staging(){
         }
         catch(err){
             //clearInterval(instawp_check_staging_interval);
-             console.log(err);
+            console.log(err);
             //alert(err);
         }
     }, function(XMLHttpRequest, textStatus, errorThrown) {

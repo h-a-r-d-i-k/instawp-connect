@@ -65,51 +65,74 @@ class InstaWP_Backup_Api
 
       //autologin code call endpoint
       register_rest_route($this->namespace . '/' . $this->version_2, '/auto-login-code', array(
-         'methods'             => 'GET',
+         'methods'             => 'POST',
          'callback'            => array( $this, 'instawp_handle_auto_login_code' ),
          'permission_callback' => '__return_true',
       ));
 
       //autologin endpoint
       register_rest_route($this->namespace . '/' . $this->version_2, '/auto-login', array(
-         'methods'             => 'GET',
+         'methods'             => 'POST',
          'callback'            => array( $this, 'instawp_handle_auto_login' ),
          'permission_callback' => '__return_true',
       ));
    }
 
-   /**
+  /**
     * Handle repsonse for login code generate
     * */
    public function instawp_handle_auto_login_code ( $request ){
       $response_array = array();
 
-      $param_api_key = $request->get_param('api_key');
+      // Hashed string
+      $param_api_key = $request->get_param('api_key');      
 
       $connect_options = get_option('instawp_api_options', '');
-      $current_api_key = $connect_options['api_key'];
 
-      if (!empty($param_api_key) && $param_api_key === $current_api_key) {
+      // Non hashed
+      $current_api_key = !empty($connect_options) ? $connect_options['api_key'] : "";
+
+      $current_api_key_hash = "";
+
+      // check for pipe
+      if (!empty($current_api_key) && strpos($current_api_key, '|') !== false) {          
+         $exploded = explode('|', $current_api_key);
+         $current_api_key_hash = hash('sha256', $exploded[1]);
+      }else{
+         $current_api_key_hash = !empty($current_api_key) ? hash('sha256', $current_api_key) : "";
+      }
+
+      if ( 
+         !empty($param_api_key) && 
+         $param_api_key === $current_api_key_hash 
+      ) {
          $uuid_code = wp_generate_uuid4();
          $uuid_code_256 = str_shuffle( $uuid_code . $uuid_code );
 
          $auto_login_api = get_rest_url(null, '/' . $this->namespace . '/' . $this->version_2 . "/auto-login");
 
-         $auto_login_url = add_query_arg( 
-            array(
-               'c' => $uuid_code_256
-            ), 
-            $auto_login_api 
+         $message = "success";
+         $response_array = array(
+            'code' => $uuid_code_256,
+            'message' => $message
          );
+         set_transient('instawp_auto_login_code', $uuid_code_256, 8 * HOUR_IN_SECONDS);
+      }else{
+         $message = "request invalid - ";
+
+         if ( empty($param_api_key) ) { // api key parameter is empty
+            $message .= "key parameter missing";
+         }
+         elseif ($param_api_key !== $current_api_key_hash) { // local and param, api key hash not matched
+            $message .= "api key mismatch";
+         }
+         else{ // default response
+            $message = "invalid request";  
+         }
 
          $response_array = array(
-            'login_url' => $auto_login_url
-         );
-         set_transient('instawp_auto_login_code', $uuid_code, 8 * HOUR_IN_SECONDS);
-      }else{
-         $response_array = array(
             'error'   => true,
-            'message' => 'Key Not Valid',
+            'message' => $message,
          );
       }
 
@@ -119,7 +142,7 @@ class InstaWP_Backup_Api
    }
 
    /**
-    * Auto login logic
+    * Auto login url generate
     * */
    public function instawp_handle_auto_login( $request )
    {
@@ -127,25 +150,79 @@ class InstaWP_Backup_Api
 
       $param_api_key = $request->get_param('api_key');
       $param_code = $request->get_param('c');
+      $param_user = $request->get_param('s');
 
       $connect_options = get_option('instawp_api_options', '');
-      $current_api_key = $connect_options['api_key'];
+
+      // Non hashed
+      $current_api_key = !empty($connect_options) ? $connect_options['api_key'] : '';
 
       $current_login_code = get_transient( 'instawp_auto_login_code' );
+
+      $current_api_key_hash = "";
+
+      // check for pipe
+      if (!empty($current_api_key) && strpos($current_api_key, '|') !== false) { 
+         $exploded = explode('|', $current_api_key);
+         $current_api_key_hash = hash('sha256', $exploded[1]);
+      }else{
+         $current_api_key_hash = !empty($current_api_key) ? hash('sha256', $current_api_key) : "";
+      }
 
       if ( 
          !empty( $param_api_key ) && 
          !empty( $param_code ) &&
-         $param_api_key === $current_api_key &&  
+         !empty( $param_user ) &&
+         $param_api_key === $current_api_key_hash && 
+         false !== $current_login_code &&
          $param_code === $current_login_code 
       ) {
-
+         // Decoded user
+         $site_user = base64_decode( $param_user );
+         
+         // Make url 
+         $auto_login_url = add_query_arg( 
+            array(
+               'c' => $param_code,
+               's' => base64_encode( $site_user )
+            ), 
+            wp_login_url('', true)  
+         );
          // Auto Login Logic to be written
-
+         $message = "success";
+         $response_array = array(
+            'error'   => false,
+            'message' => $message,
+            'login_url' => $auto_login_url,
+         );
       }else{
+         $message = "request invalid - ";
+
+         if ( empty($param_api_key) ) { // api key parameter is empty
+            $message .= "key parameter missing";
+         }
+         elseif ( empty($param_code) ) { // code parameter is empty
+            $message .= "code parameter missing";
+         }
+         elseif ( empty($param_user) ) { // user parameter is empty
+            $message .= "user parameter missing";
+         }
+         elseif ($param_api_key !== $current_api_key_hash) { // local and param, api key hash not matched
+            $message .= "api key mismatch";
+         }
+         elseif ($param_code !== $current_login_code) { // local and param, code not matched
+            $message .= "code mismatch";
+         }
+         elseif (false === $current_login_code) { // local code parameter option not set
+            $message .= "code expired";
+         }
+         else{ // default response
+            $message = "invalid request";  
+         }
+
          $response_array = array(
             'error'   => true,
-            'message' => 'Key Not Valid',
+            'message' => $message,
          );
       }
 
@@ -308,6 +385,7 @@ class InstaWP_Backup_Api
          if ( isset($parameters['wp']) ) {
             $this->create_user($parameters['wp']['users']);
          }
+         InstaWP_AJAX::instawp_folder_remover_handle();
          $response['status'] = true;
          $response['message'] = 'Restore task completed.';
       } 
@@ -326,6 +404,7 @@ class InstaWP_Backup_Api
    }
 
    public function restore_status( $task_id,$response ) {
+      error_log("Restore Status");
       global $InstaWP_Curl;
        $body = array(
 		   "task_id"         => $task_id,
@@ -356,14 +435,16 @@ class InstaWP_Backup_Api
                );
                $body_json     = json_encode($body);
                $curl_response = $InstaWP_Curl->curl($url, $body_json);
+               error_log("API Error: ==> ".$curl_response['error']);
                if ( $curl_response['error'] == false ) {
 
                   $response              = (array) json_decode($curl_response['curl_res'], true);
                   $response['task_info'] = $body;
-                  update_option('instawp_backup_status_options', $response);
+                  update_option('instawp_backup_status_options', $response);                  
                }
             }
          }
+         error_log('instawp rest api \n '.print_r(get_option( 'instawp_backup_status_options'),true));
          update_option('instawp_finish_restore', $response);
          return $body;
    }

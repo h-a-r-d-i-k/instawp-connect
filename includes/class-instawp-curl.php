@@ -35,14 +35,14 @@ class InstaWP_Curl
       $this->set_api_key();
       $res = array();
       $headers = array();
-    //   $headers = array(
-		  // 'Authorization: Bearer ' . $this->api_key,
-		  // 'Accept: application/json',
-		  // 'Content-Type: application/json',
-    //   );
-    //   if ( ! empty($header) ) {
-    //      array_push($headers, $header);
-    //   }
+      $headers = array(
+		  'Authorization: Bearer ' . $this->api_key,
+		  'Accept: application/json',
+		  'Content-Type: application/json',
+      );
+      if ( ! empty($header) ) {
+         array_push($headers, $header);
+      }
       $instawp_plugin->instawp_log->WriteLog( 'Initiate Api Call API_URL: '. $url .' Headres: ' . json_encode( $headers ) . ' Body: '.$body,'notice');
       $InstaWP_Backup_Api->instawp_log->WriteLog( 'Initiate Api Call API_URL: '. $url .' Headres: ' . json_encode( $headers ) . ' Body: '.$body,'notice');
       $useragent =  isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '' ;
@@ -90,8 +90,7 @@ class InstaWP_Curl
          $instawp_plugin->instawp_log->WriteLog( 'Response:' . $this->response, 'error');
          $InstaWP_Backup_Api->instawp_log->WriteLog( 'Response:' . $this->response, 'error');
       } else {
-         $respons_arr = (array) json_decode($this->response['body']);
-         
+         $respons_arr = (array) json_decode($this->response['body']);         
          if ( $respons_arr['status'] == 1 ) {
 
             $res['error']    = 0;
@@ -318,7 +317,9 @@ class InstaWP_Curl
 
    public function get_presigned_url( $backup_info ) {
       global $instawp_plugin;
+      $php_version  = substr( phpversion(), 0, 3);
       $backup_info['task_id'] = $this->task_id;
+      $backup_info['php_version'] = $php_version;
       $backup_info_json = json_encode($backup_info);
       $connect_ids      = get_option('instawp_connect_id_options', '');
 
@@ -328,13 +329,10 @@ class InstaWP_Curl
             $api_doamin = InstaWP_Setting::get_api_domain();
             $url           = $api_doamin . INSTAWP_API_URL . '/connects/' . $id . '/backup_upload';
             $curl_response = $this->curl($url, $backup_info_json);
-
             if ( $curl_response['error'] == 0 ) {
-
+               
                $response = (array) json_decode($curl_response['curl_res'], true);
-
-               if ( $response['status'] == 1 ) {
-
+               if ( $response['status'] == 1 ) {                  
                   update_option('instawp_backup_upload_options', $response); // old 
                   //$backup_init[ 'presigned_urls' ] = $response;
                   //InstaWP_Setting::update_connect_option('instawp_connect_options',$response,$id,$this->task_id,'backup_upload');
